@@ -8,7 +8,7 @@ class ApolloNeoEnvManagerDev < Formula
 
   depends_on "curl"
   depends_on "gnupg"
-  depends_on "python@latest"
+  depends_on "python"
 
   resource "apollo_license" do
     url "https://github.com/ApolloAuto/apollo/raw/refs/heads/master/LICENSE"
