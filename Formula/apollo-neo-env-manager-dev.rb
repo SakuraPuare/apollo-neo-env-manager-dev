@@ -1,10 +1,10 @@
 class ApolloNeoEnvManagerDev < Formula
-  desc "Apollo Environment Manager"
-  homepage "https://apollo.baidu.com/"
-  url "https://apollo-pkg-beta.cdn.bcebos.com/apollo/core/pool/main/a/apollo-neo-env-manager-dev/apollo-neo-env-manager-dev_10.0.0-rc1-r4_amd64.deb"
-  version "10.0.0-rc1-r4"
-  sha256 "a51f016eaf57d0e1d13e838978b6fbd67f7a6275bf271fdca782746edddda9ef"
-  license :cannot_represent
+  desc "Apollo Environment Manager for Apple Silicon"
+  homepage "https://github.com/SakuraPuare/aem-silicon"
+  url "https://github.com/SakuraPuare/aem-silicon/archive/refs/heads/main.tar.gz"
+  version "1.0.0"
+  sha256 "32855058ba0ae6c401ae333faa40b81edfee28046c76b20f7ac169827358f4fe"
+  license "Apache-2.0"
 
   depends_on "curl"
   depends_on "gnupg"
@@ -21,24 +21,9 @@ class ApolloNeoEnvManagerDev < Formula
   end
 
   def install
-    # 创建临时目录
-    temp_dir = buildpath/"temp"
-    temp_dir.mkpath
-
-    # 下载并提取 deb 包
-    # macOS 的 ar 命令语法不同，需要先切换到目标目录
-    Dir.chdir(temp_dir) do
-      system "ar", "x", cached_download
-    end
-    # 查找数据包
-    data_tar = temp_dir.glob("data.tar.*").first
-    odie "无法找到 deb 包中的数据文件" if data_tar.nil?
-
-    # 提取数据包内容
-    system "tar", "-xf", data_tar, "-C", temp_dir
-
-    # 安装文件到 Homebrew 目录
-    prefix.install Dir[temp_dir/"opt/apollo/*"]
+    # 安装主要文件到 Homebrew 目录
+    # GitHub 仓库中的文件结构已经适配了 Apple Silicon
+    prefix.install Dir["*"]
 
     # 安装许可证文件
     resource("apollo_license").stage do
@@ -50,14 +35,18 @@ class ApolloNeoEnvManagerDev < Formula
       (share/name).install "deb.gpg.key" => "apollo.gpg.key"
     end
 
-    # 创建符号链接
-    bin.install_symlink prefix/"aem/aem" => "aem"
+    # 创建符号链接 - 根据 GitHub 仓库的实际文件结构调整
+    bin.install_symlink prefix/"aem" => "aem"
 
-    # 安装 bash 补全
-    bash_completion.install prefix/"aem/auto_complete.bash" => "aem"
+    # 安装 bash 补全（如果存在）
+    if File.exist?(prefix/"aem/auto_complete.bash")
+      bash_completion.install prefix/"aem/auto_complete.bash" => "aem"
+    end
 
-    # 安装 zsh 补全
-    zsh_completion.install prefix/"aem/auto_complete.zsh" => "_aem"
+    # 安装 zsh 补全（如果存在）
+    if File.exist?(prefix/"aem/auto_complete.zsh")
+      zsh_completion.install prefix/"aem/auto_complete.zsh" => "_aem"
+    end
   end
 
   def post_install
@@ -78,23 +67,23 @@ class ApolloNeoEnvManagerDev < Formula
     EOF
 
     ohai "安装完成！您可以使用 'aem' 命令启动 Apollo Environment Manager。"
-    ohai "注意：这是从 Ubuntu 移植的软件包，某些功能可能需要适配 macOS 环境。"
+    ohai "这是适配 Apple Silicon 的版本，基于 GitHub 仓库：https://github.com/SakuraPuare/aem-silicon"
   end
 
   def uninstall
     # 清理符号链接
-    rm etc/"bash_completion.d/aem"
-    rm share/"zsh/functions/Completion/Unix/_aem"
-    rm bin/"aem"
+    rm_f etc/"bash_completion.d/aem"
+    rm_f share/"zsh/functions/Completion/Unix/_aem"
+    rm_f bin/"aem"
 
     # 清理 GPG 密钥
-    rm etc/"apt/keyrings/apolloauto.gpg"
+    rm_f etc/"apt/keyrings/apolloauto.gpg"
 
     # 清理仓库配置
-    rm etc/"apt/sources.list.d/apolloauto.list"
+    rm_f etc/"apt/sources.list.d/apolloauto.list"
 
-    # 清理主目录
-    rm_r prefix/"aem"
+    # 清理主目录（GitHub 仓库的所有文件）
+    rm_rf prefix
   end
 
   test do
